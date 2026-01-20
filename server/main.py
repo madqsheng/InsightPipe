@@ -114,6 +114,23 @@ def list_documents():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/docs/{filename}")
+def get_document(filename: str):
+    # Basic security check to prevent directory traversal
+    if ".." in filename or "/" in filename or "\\" in filename:
+         raise HTTPException(status_code=400, detail="Invalid filename")
+    
+    filepath = os.path.join(DOCS_DIR, filename)
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail="File not found")
+        
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            content = f.read()
+        return {"filename": filename, "content": content}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

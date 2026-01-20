@@ -16,6 +16,8 @@ const fetchDocs = async () => {
   }
 }
 
+const emit = defineEmits(['select'])
+
 onMounted(fetchDocs)
 
 defineExpose({ refresh: fetchDocs })
@@ -23,7 +25,7 @@ defineExpose({ refresh: fetchDocs })
 
 <template>
   <div class="mt-8">
-    <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center justify-between mb-6">
       <h3 class="text-xl font-bold text-gray-200">📚 Knowledge Library</h3>
       <button @click="fetchDocs" class="text-sm text-gray-400 hover:text-white transition">🔄 Refresh</button>
     </div>
@@ -38,10 +40,11 @@ defineExpose({ refresh: fetchDocs })
       <div 
         v-for="doc in docs" 
         :key="doc.filename"
-        class="bg-gray-800 border border-gray-700 hover:border-gray-500 p-4 rounded-lg cursor-pointer transition group"
+        @click="$emit('select', doc)"
+        class="bg-gray-800 border border-gray-700 hover:border-blue-500 hover:bg-gray-750 p-5 rounded-lg cursor-pointer transition-all duration-200 group shadow-md hover:shadow-xl transform hover:-translate-y-1"
       >
-        <h4 class="font-bold text-blue-300 truncate mb-1 group-hover:text-blue-200">{{ doc.title }}</h4>
-        <div class="flex justify-between text-xs text-gray-500">
+        <h4 class="font-bold text-blue-300 truncate mb-2 text-lg group-hover:text-blue-200">{{ doc.title }}</h4>
+        <div class="flex justify-between text-xs text-gray-500 border-t border-gray-700 pt-2 mt-2">
           <span>{{ doc.created_at }}</span>
           <span>{{ (doc.size / 1024).toFixed(1) }} KB</span>
         </div>

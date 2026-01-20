@@ -34,5 +34,11 @@ export const api = {
         const res = await fetch(`${API_BASE_URL}/docs`);
         if (!res.ok) throw new Error('Failed to list documents');
         return res.json();
+    },
+
+    getDocument: async (filename) => {
+        const res = await fetch(`${API_BASE_URL}/docs/${filename}`);
+        if (!res.ok) throw new Error('Failed to load document');
+        return res.json();
     }
 };
