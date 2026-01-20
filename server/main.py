@@ -131,6 +131,22 @@ def get_document(filename: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.delete("/api/docs/{filename}")
+def delete_document(filename: str):
+    # Basic security check
+    if ".." in filename or "/" in filename or "\\" in filename:
+         raise HTTPException(status_code=400, detail="Invalid filename")
+    
+    filepath = os.path.join(DOCS_DIR, filename)
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail="File not found")
+        
+    try:
+        os.remove(filepath)
+        return {"message": f"File {filename} deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

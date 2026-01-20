@@ -23,6 +23,13 @@ const onReaderClose = () => {
   selectedDoc.value = null
 }
 
+const onDocDeleted = () => {
+    selectedDoc.value = null
+    if (galleryRef.value) {
+        galleryRef.value.refresh()
+    }
+}
+
 const onSaved = () => {
     // Automatically switch back to library to show the result
     currentTab.value = 'library'
@@ -32,6 +39,7 @@ const onSaved = () => {
         setTimeout(() => galleryRef.value.refresh(), 100)
     }
 }
+
 </script>
 
 <template>
@@ -78,9 +86,13 @@ const onSaved = () => {
       
       <!-- MODE: READ (Overlay) -->
       <transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95">
-        <div v-if="selectedDoc" class="fixed inset-0 z-40 bg-gray-900/90 backdrop-blur-sm p-4 sm:p-8 flex justify-center">
+        <div v-if="selectedDoc" class="fixed inset-0 z-[100] bg-gray-900/90 backdrop-blur-sm p-4 sm:p-8 flex justify-center">
             <div class="w-full max-w-4xl h-full">
-                <DocReader :filename="selectedDoc.filename" @close="onReaderClose" />
+                <DocReader 
+                    :filename="selectedDoc.filename" 
+                    @close="onReaderClose" 
+                    @deleted="onDocDeleted"
+                />
             </div>
         </div>
       </transition>

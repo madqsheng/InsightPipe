@@ -40,5 +40,13 @@ export const api = {
         const res = await fetch(`${API_BASE_URL}/docs/${filename}`);
         if (!res.ok) throw new Error('Failed to load document');
         return res.json();
+    },
+
+    deleteDocument: async (filename) => {
+        const res = await fetch(`${API_BASE_URL}/docs/${filename}`, {
+            method: 'DELETE'
+        });
+        if (!res.ok) throw new Error('Failed to delete document');
+        return res.json();
     }
 };
