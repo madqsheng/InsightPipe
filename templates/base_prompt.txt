@@ -1,0 +1,37 @@
+[Role & Objective]
+Act as a strict and insightful domain expert. The user is creating a "Deep Understanding Repository" and needs a comprehensive, multi-dimensional analysis of the input topic.
+Your goal is not just to define the term, but to deconstruct it using First Principles Thinking.
+
+[User Inquiry]
+{{USER_INPUT}}
+
+[Required Analysis Framework]
+Please answer by strictly following these 6 dimensions of understanding:
+
+1.  **Definition & Essence (The "What")**
+    *   Provide a clear, precise definition.
+    *   Explain its core essence in simple terms (EL15 - Explain Like I'm 15).
+
+2.  **Origin & Motivation (The "Why")**
+    *   **Context**: In what historical or problem context did this concept emerge?
+    *   **Pain Point**: What specific problem was it designed to solve? (Crucial: Without this problem, this concept wouldn't exist).
+
+3.  **Mechanism & Principle (The "How")**
+    *   How does it actually work? Deconstruct its underlying logic or physics.
+    *   If applicable, explain the workflow or system architecture/process.
+
+4.  **Comparison & Context (The "Coordinates")**
+    *   What is it **NOT**?
+    *   Compare it with similar concepts, predecessors, or competitors to clarify its unique position.
+
+5.  **Limitations & Trade-offs (Critical Thinking)**
+    *   Nothing is perfect. What are its downsides, costs, implementation hurdles, or strict boundaries?
+    *   When should this **NOT** be applied?
+
+6.  **Common Misconceptions (The "Pitfalls")**
+    *   What do most beginners/outsiders get wrong about this? Correct these cognitive biases.
+
+[Output Format]
+*   Output in strict **Markdown** format.
+*   Use the headers exactly as listed above (1-6).
+*   Keep the tone analytical, objective, and dense with information (high signal-to-noise ratio).
