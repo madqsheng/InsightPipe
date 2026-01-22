@@ -48,5 +48,18 @@ export const api = {
         });
         if (!res.ok) throw new Error('Failed to delete document');
         return res.json();
+    },
+
+    importGemini: async (url) => {
+        const res = await fetch(`${API_BASE_URL}/import/gemini`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url })
+        });
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.detail || 'Failed to import Gemini conversation');
+        }
+        return res.json();
     }
 };

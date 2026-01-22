@@ -4,6 +4,7 @@ import PromptGenerator from './components/PromptGenerator.vue'
 import DocEditor from './components/DocEditor.vue'
 import DocGallery from './components/DocGallery.vue'
 import DocReader from './components/DocReader.vue'
+import GeminiImporter from './components/GeminiImporter.vue'
 
 const currentTab = ref('library') // 'library' | 'create'
 const selectedDoc = ref(null) // document object when in 'read' mode
@@ -106,16 +107,24 @@ const onSaved = () => {
          />
       </div>
 
-      <!-- MODE: CREATE (Split View) -->
-      <div v-if="currentTab === 'create'" class="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[calc(100vh-140px)] animate-fade-in-up">
-        <!-- Left: Ask -->
-        <div class="h-full overflow-y-auto custom-scrollbar">
-            <PromptGenerator />
+      <!-- MODE: CREATE -->
+      <div v-if="currentTab === 'create'" class="space-y-8 animate-fade-in-up">
+        <!-- Gemini Importer - Full Width Card -->
+        <div>
+          <GeminiImporter />
         </div>
-        
-        <!-- Right: Save -->
-        <div class="h-full overflow-y-auto custom-scrollbar">
-            <DocEditor @saved="onSaved" /> 
+
+        <!-- Original Create Flow - Side by Side -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <!-- Left: Ask -->
+          <div class="h-full overflow-y-auto custom-scrollbar">
+              <PromptGenerator />
+          </div>
+          
+          <!-- Right: Save -->
+          <div class="h-full overflow-y-auto custom-scrollbar">
+              <DocEditor @saved="onSaved" /> 
+          </div>
         </div>
       </div>
       

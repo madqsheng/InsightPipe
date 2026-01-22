@@ -40,6 +40,17 @@ class DocMetadata(BaseModel):
     created_at: str
     size: int
 
+class GeminiImportRequest(BaseModel):
+    url: str
+
+class GeminiImportResponse(BaseModel):
+    success: bool
+    title: str
+    markdown: str
+    prompt: str
+    filename: str
+    turn_count: int
+
 def get_template_content(template_name: str) -> str:
     template_path = os.path.join(TEMPLATES_DIR, template_name)
     if not os.path.exists(template_path):
@@ -146,6 +157,91 @@ def delete_document(filename: str):
         return {"message": f"File {filename} deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+def get_analysis_prompt() -> str:
+    """返回标准的对话分析Prompt模板"""
+    return """你是一个专业的对话分析师。我上传了一段Gemini对话记录。
+
+**任务**：提取这段对话中的核心洞察（Insights）。
+
+**输出格式**：
+## 对话概览
+- 主题：[一句话概括]
+- 核心问题：[用户想解决什么]
+
+## 关键洞察（3-5条）
+1. [洞察标题]
+   - 证据：[AI给出的数据/案例]
+   - 启发：[可迁移的思维模式]
+
+2. [洞察标题]
+   - 证据：[具体支撑]
+   - 启发：[实际应用]
+
+## 可执行建议
+[如果有具体行动计划，在此总结]
+
+**注意**：
+- 忽略客套话和重复内容
+- 优先提取有数据支撑的结论
+- 关注"为什么"而不仅是"是什么"
+- 如果涉及敏感话题，客观总结事实部分即可
+"""
+
+@app.post("/api/import/gemini", response_model=GeminiImportResponse)
+async def import_gemini_conversation(request: GeminiImportRequest):
+    """
+    导入Gemini分享链接的对话
+    返回解析后的Markdown内容和推荐的分析Prompt
+    """
+    try:
+        # 导入GeminiService
+        sys.path.insert(0, os.path.join(BASE_DIR, 'server', 'services'))
+        from gemini_service import GeminiService
+        
+        # 提取share ID
+        share_id = GeminiService.extract_id(request.url)
+        if not share_id:
+            raise HTTPException(status_code=400, detail="无效的Gemini分享链接")
+        
+        # 获取对话数据
+        result = GeminiService.fetch_conversation(request.url)
+        
+        # 处理标题（确保是字符串）
+        title = result.get('title', 'Gemini对话记录')
+        if isinstance(title, list):
+            title = str(title[1]) if len(title) > 1 else str(title[0])
+        
+        # 计算轮数
+        turn_count = result['content'].count('## 🙋‍♂️ User')
+        
+        # 生成完整的Markdown内容
+        md_content = f"""# {title}
+
+*共 {turn_count} 轮对话*
+---
+
+{result['content']}
+"""
+        
+        # 生成安全的文件名
+        safe_title = sanitize_filename(title)[:30]
+        filename = f"{share_id}_{safe_title}.md"
+        
+        return GeminiImportResponse(
+            success=True,
+            title=title,
+            markdown=md_content,
+            prompt=get_analysis_prompt(),
+            filename=filename,
+            turn_count=turn_count
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"导入失败: {str(e)}")
+
 
 if __name__ == "__main__":
     import uvicorn
