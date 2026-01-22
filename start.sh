@@ -9,7 +9,7 @@ echo "🚀 Starting InsightPipe..."
 
 # Start Backend
 echo "Starting Backend (FastAPI)..."
-nohup python -m uvicorn server.main:app --host 127.0.0.1 --port 8000 > server.log 2>&1 &
+nohup python -m uvicorn server.main:app --host 127.0.0.1 --port 8100 > server.log 2>&1 &
 BACKEND_PID=$!
 
 # Start Frontend
@@ -21,7 +21,7 @@ cd ..
 
 echo "✅ InsightPipe is running!"
 echo "   - Web UI: http://localhost:5173"
-echo "   - API:    http://localhost:8000"
+echo "   - API:    http://localhost:8100"
 echo ""
 echo "📝 Logs are being written to server.log and web.log"
 echo "💡 Run './stop.sh' to stop everything."

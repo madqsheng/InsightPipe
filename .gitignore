@@ -24,3 +24,4 @@ docs/*.md
 
 # Logs if any
 *.log
+gemini_data_samples/
