@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
 解析 Gemini raw 数据文件，生成 Markdown 格式的对话记录
+修复了 AI 回答路径解析失败的问题
 """
 import json
 import re
 import os
-import sys
 
 def parse_raw_file(raw_path):
     """解析 raw 文件，返回对话列表"""
@@ -16,9 +16,9 @@ def parse_raw_file(raw_path):
     lines = content.split('\n')
     target_line = None
     
-    for line in lines:
+    # 取最后一行包含 wrb.fr 的（通常包含最全的历史）
+    for line in reversed(lines):
         if 'wrb.fr' in line:
-            # 提取 JSON 部分
             match = re.search(r'(\[\["wrb\.fr".*)$', line)
             if match:
                 target_line = match.group(1)
@@ -27,30 +27,27 @@ def parse_raw_file(raw_path):
     if not target_line:
         raise ValueError("未找到 wrb.fr 数据行")
     
-    # 解析外层 JSON
     try:
         outer_data = json.loads(target_line)
-    except json.JSONDecodeError as e:
-        raise ValueError(f"外层 JSON 解析失败: {e}")
+        inner_json_str = outer_data[0][2]
+        inner_data = json.loads(inner_json_str)
+    except Exception as e:
+        raise ValueError(f"JSON 解析失败: {e}")
     
-    # 提取内层 JSON 字符串
-    inner_json_str = outer_data[0][2]
-    inner_data = json.loads(inner_json_str)
-    
-    # 提取标题和对话列表
+    # 提取标题
     title = "Gemini 对话记录"
-    if len(inner_data[0]) > 2:
-        title_raw = inner_data[0][2]
-        # 标题可能是 list，取第二个元素
-        if isinstance(title_raw, list) and len(title_raw) > 1:
-            title = str(title_raw[1])
-        else:
-            title = str(title_raw)
+    try:
+        if len(inner_data[0]) > 2:
+            title_node = inner_data[0][2]
+            if isinstance(title_node, list) and len(title_node) > 1:
+                title = str(title_node[1])
+            else:
+                title = str(title_node)
+    except: pass
     
     conv_list = inner_data[0][1]
-    
-    # 解析每轮对话
     turns = []
+    
     for item in conv_list:
         if not isinstance(item, list) or len(item) < 4:
             continue
@@ -58,23 +55,28 @@ def parse_raw_file(raw_path):
         user_text = None
         model_text = None
         
-        # 提取 User 文本 - 路径: item[2][0][0]
+        # 1. User 文本 - item[2][0][0]
         try:
             user_text = item[2][0][0]
-        except (IndexError, TypeError):
-            pass
+        except: pass
         
-        # 提取 Model 文本 - 路径: item[3][0][1][0]
+        # 2. Model 文本 - 尝试多级深度搜索
+        # 路径 A (常见): item[3][0][0][1][0]
+        # 路径 B (简化): item[3][0][1][0]
         try:
-            # item[3] 是 candidates list
-            candidates = item[3]
-            if len(candidates) > 0 and isinstance(candidates[0], list):
-                # candidates[0] 是 ['rc_id', [response_text, ...]]
-                if len(candidates[0]) > 1 and isinstance(candidates[0][1], list):
-                    model_text = candidates[0][1][0]
-        except (IndexError, TypeError):
-            pass
-        
+            candidates_container = item[3]
+            if isinstance(candidates_container, list) and len(candidates_container) > 0:
+                first_node = candidates_container[0]
+                if isinstance(first_node, list) and len(first_node) > 0:
+                    # 尝试更深的路径 A: item[3][0][0][1][0]
+                    content_node = first_node[0]
+                    if isinstance(content_node, list) and len(content_node) > 1 and isinstance(content_node[1], list):
+                        model_text = content_node[1][0]
+                    # 尝试路径 B: item[3][0][1][0]
+                    elif len(first_node) > 1 and isinstance(first_node[1], list):
+                        model_text = first_node[1][0]
+        except: pass
+
         if user_text or model_text:
             turns.append({
                 'user': user_text,
@@ -87,45 +89,26 @@ def parse_raw_file(raw_path):
     }
 
 def save_as_markdown(data, output_path):
-    """将对话数据保存为 Markdown 文件"""
-    lines = []
+    """保存为 Markdown"""
+    lines = [f"# {data['title']}\n", f"*共 {len(data['turns'])} 轮对话*\n", "---\n\n"]
     
-    # 标题
-    lines.append(f"# {data['title']}\n")
-    lines.append(f"*共 {len(data['turns'])} 轮对话*\n")
-    lines.append("---\n\n")
-    
-    # 对话内容
-    for i, turn in enumerate(data['turns'], 1):
+    for turn in data['turns']:
         if turn['user']:
             lines.append(f"**User:** {turn['user']}\n\n")
         
         if turn['model']:
             lines.append(f"**AI:** {turn['model']}\n\n")
+        else:
+            lines.append(f"**AI:** *[未成功解析回答内容]*\n\n")
         
         lines.append("---\n\n")
     
-    # 写入文件
     with open(output_path, 'w', encoding='utf-8') as f:
         f.writelines(lines)
-    
-    print(f"✅ 已保存: {output_path}")
 
 def main():
-    # 处理所有 _raw.txt 文件
     data_dir = 'gemini_data_samples'
-    
-    if not os.path.exists(data_dir):
-        print(f"❌ 目录不存在: {data_dir}")
-        return
-    
     raw_files = [f for f in os.listdir(data_dir) if f.endswith('_raw.txt')]
-    
-    if not raw_files:
-        print(f"❌ 没有找到 _raw.txt 文件")
-        return
-    
-    print(f"找到 {len(raw_files)} 个 raw 文件\n")
     
     for raw_file in raw_files:
         raw_path = os.path.join(data_dir, raw_file)
@@ -133,14 +116,11 @@ def main():
         md_path = os.path.join(data_dir, md_file)
         
         try:
-            print(f"🔄 解析: {raw_file}")
             data = parse_raw_file(raw_path)
             save_as_markdown(data, md_path)
-            print(f"   标题: {data['title']}")
-            print(f"   轮数: {len(data['turns'])}\n")
+            print(f"✅ {raw_file} -> {len(data['turns'])} 轮 (标题: {data['title']})")
         except Exception as e:
-            print(f"❌ 失败: {raw_file}")
-            print(f"   错误: {e}\n")
+            print(f"❌ {raw_file} 失败: {e}")
 
 if __name__ == '__main__':
     main()
