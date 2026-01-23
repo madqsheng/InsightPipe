@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8100/api';
+const API_BASE_URL = 'http://localhost:8817/api';
 
 export const api = {
     healthCheck: async () => {

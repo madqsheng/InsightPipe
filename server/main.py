@@ -196,8 +196,7 @@ async def import_gemini_conversation(request: GeminiImportRequest):
     """
     try:
         # 导入GeminiService
-        sys.path.insert(0, os.path.join(BASE_DIR, 'server', 'services'))
-        from gemini_service import GeminiService
+        from .services import GeminiService
         
         # 提取share ID
         share_id = GeminiService.extract_id(request.url)
@@ -245,4 +244,4 @@ async def import_gemini_conversation(request: GeminiImportRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8100)
+    uvicorn.run(app, host="0.0.0.0", port=8817)
